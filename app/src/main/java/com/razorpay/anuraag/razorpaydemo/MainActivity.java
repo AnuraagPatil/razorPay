@@ -1,14 +1,15 @@
 package com.razorpay.anuraag.razorpaydemo;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -16,14 +17,11 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.razorpay.Checkout;
-import com.razorpay.PaymentResultListener;
-
-import org.json.JSONObject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements PaymentResultListener {
+public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.input_layout_contact)
     TextInputLayout getInputLayoutContact;
@@ -46,7 +44,6 @@ public class MainActivity extends AppCompatActivity implements PaymentResultList
 
     private static final String TAG = "logPaymentActivity";
     private Activity activity = this;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,12 +82,18 @@ public class MainActivity extends AppCompatActivity implements PaymentResultList
             return;
         }
 
-        startPayment();
+        Intent intent = new Intent(activity, PaymentActivity.class);
+        intent.putExtra(getString(R.string.intent_key_contact), getInputContact.getText().toString());
+        intent.putExtra(getString(R.string.intent_key_email), getInputEmail.getText().toString());
+        intent.putExtra(getString(R.string.intent_key_amount), getInputAmount.getText().toString());
+        startActivity(intent);
+
         Toast.makeText(getApplicationContext(), "Thank You!", Toast.LENGTH_SHORT).show();
     }
 
     private boolean validateContact() {
-        if (getInputContact.getText().toString().trim().isEmpty()) {
+        String getContact = getInputContact.getText().toString().trim();
+        if (getContact.isEmpty() || !isValidContact(getContact)) {
             getInputLayoutContact.setError(getString(R.string.err_msg_contact));
             requestFocus(getInputContact);
             return false;
@@ -131,52 +134,13 @@ public class MainActivity extends AppCompatActivity implements PaymentResultList
         return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 
+    private boolean isValidContact(String getContact) {
+        return !TextUtils.isEmpty(getContact) && getContact.length() == 10;
+    }
+
     private void requestFocus(View view) {
         if (view.requestFocus()) {
             getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-        }
-    }
-
-    private void startPayment() {
-        final Checkout co = new Checkout();
-
-        try {
-            JSONObject options = new JSONObject();
-            options.put("name", "Razorpay Corp");
-            options.put("description", "Testing mode");
-            //options.put("image", "https://s3.amazonaws.com/rzp-mobile/images/rzp.png");
-            options.put("currency", "INR");
-            options.put("amount", "100");
-
-            JSONObject preFill = new JSONObject();
-            preFill.put("email", "Anuraag0551@gmail.com");
-            preFill.put("contact", "8329133027");
-
-            options.put("prefill", preFill);
-
-            co.open(this, options);
-        } catch (Exception e) {
-            Toast.makeText(activity, "Error in payment: " + e.getMessage(), Toast.LENGTH_SHORT)
-                    .show();
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onPaymentSuccess(String razorpayPaymentID) {
-        try {
-            Toast.makeText(this, "Payment Successful: " + razorpayPaymentID, Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.e(TAG, "Exception in onPaymentSuccess", e);
-        }
-    }
-
-    @Override
-    public void onPaymentError(int code, String response) {
-        try {
-            Toast.makeText(this, "Payment failed: " + code + " " + response, Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.e(TAG, "Exception in onPaymentError", e);
         }
     }
 

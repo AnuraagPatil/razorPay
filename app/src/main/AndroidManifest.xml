@@ -23,6 +23,7 @@
             android:name="com.razorpay.ApiKey"
             android:value="rzp_test_cuJ7v5LhRW6SUh" />
 
+        <activity android:name=".PaymentActivity"></activity>
     </application>
 
 </manifest>
